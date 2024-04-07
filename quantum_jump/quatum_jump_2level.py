@@ -1,21 +1,22 @@
 # Quantum jump in a 2-level system
-# hbar is 1 in this script
+# hbar is 1 in this project
 from qutip import *
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+from tqdm import tnrange
 
 # Quantum system setup 
 gamma = 1.                                   # population decay rate
-Ee = 0.                                      # excitation energy
-c = Qobj(np.array([[0,0],[1,0]]))            # jump operator with basis |e> , |g>
-H0 = Qobj(np.array([[Ee,0],[0,0]]))          # system Hamiltonian
-H = H0 -1j/2 * gamma * c.conj().trans() * c  # non-unitary effective Hamiltonian
+delta = 0.                                   # detuning
+c = Qobj(np.array([[0,1],[0,0]]))            # jump operator with basis |g> , |e>
+H0 = Qobj(np.array([[delta,0],[0,0]]))       # system Hamiltonian
+H = H0 - 0.5j * gamma * c.conj().trans() * c # non-unitary effective Hamiltonian
 t=10                                         # total evolving time 
 dt=0.01                                      # length unit of time slices
 Nt=int(t/dt)                                 # total amount of time slices
 num=1000                                     # the total number of the system replica  
-a_1, a_2 = 1, 2                              # the initial state coefficients
+a_1, a_2 = np.sqrt(2), 1                     # the initial state coefficients
 
 # calculate the probability
 def prob(coefficient):
@@ -32,14 +33,14 @@ def state_evol_time_line(a=1,b=0):
       if jump_rate * dt > random.random():
           psi[n+1] = state_jump / state_jump.norm()
       else:
-          state_no_jump = psi[n] + H * psi[n] * dt
+          state_no_jump = psi[n] - 1j * H * psi[n] * dt
           psi[n+1] = state_no_jump / state_no_jump.norm()
       n += 1
   return psi
 
 # collecting the time evolution for each quantum jump
 realization = []
-for i in range(num):
+for i in tnrange(num):
   realization.append(state_evol_time_line(a_1,a_2))
 
 # projector
