@@ -7,13 +7,13 @@ import random # random generator
 from tqdm import tnrange # progress indicator
 
 # Quantum system setup 
-gamma = 1.                                       # population decay rate
-delta = 0.1                                      # detuning
-Omega = 0.5                                      # Rabi frequency
-c = Qobj(np.array([[0,1,0],[0,0,1],[0,0,0]]))    # jump operator with cascade system |3> -> |2> -> |1>
+gamma = 1.                                      # population decay rate
+delta = 0.1                                     # detuning
+Omega = 0.5                                     # Rabi frequency
+c = Qobj(np.array([[0,1,0],[0,0,1],[0,0,0]]))   # jump operator with cascade system |3> -> |2> -> |1>
 H0 = Qobj(np.array([[0,Omega,0],[Omega,-delta,Omega],[0,Omega,-2*delta]]))   # system Hamiltonian
-H = H0 -1j/2 * gamma * c.conj().trans() * c      # non-unitary effective Hamiltonian
-t=10                                             # total evolving time 
+H = H0 - 0.5j * gamma * c.conj().trans() * c     # non-unitary effective Hamiltonian
+t=20                                             # total evolving time 
 dt=0.01                                          # length unit of time slices
 Nt=int(t/dt)                                     # total amount of time slices
 num=1000                                         # the total number of the system replica  
@@ -23,19 +23,19 @@ a_1, a_2, a_3 = 0, 0, 1                          # the initial state coefficient
 def prob(coefficient):
     return pow(coefficient.real,2)+pow(coefficient.imag,2)
 
-def state_evol_time_line(a=0,b=0,c=1):
-  psi=[0 for k in range(int(Nt+2))] # create an initial empty list to track one state jumping with time
-  normalization = pow(pow(a,2)+pow(b,2)+pow(c,2),1/2)
-  psi[0] = Qobj(np.array([[a/normalization],[b/normalization],[c/normalization]])) # prepare the initial normalized state (a,b,c)
+def state_evol_time_line(coefficient_1=0,coefficient_2=0,coefficient_3=1):
+  # create an initial normalized state to track one state jumping with time
+  psi=[Qobj(np.array([[coefficient_1],[coefficient_2],[coefficient_3]]))]
   n = 0
   while n <= t/dt:
       state_jump = c * psi[n]
       jump_rate = state_jump.norm() ** 2
-      if jump_rate * dt > random.random():
-          psi[n+1] = state_jump / state_jump.norm()
+      r = random.random()
+      if jump_rate * dt > r:
+          psi.append(state_jump / state_jump.norm())
       else:
           state_no_jump = psi[n] - 1j * H * psi[n] * dt
-          psi[n+1] = state_no_jump / state_no_jump.norm()
+          psi.append(state_no_jump / state_no_jump.norm())
       n += 1
   return psi
 
@@ -76,6 +76,10 @@ axs[1].set_title('coherence')
 
 for ax in axs.flat:
     ax.set(xlabel='time', ylabel='')
+
+# Hide x labels and tick labels for top plots and y ticks for right plots.
+for ax in axs.flat:
+    ax.label_outer()
 
 # Hide x labels and tick labels for top plots and y ticks for right plots.
 for ax in axs.flat:
